@@ -314,3 +314,86 @@ export class AppModule { }
 <input type="text" [(ngModel)]="serverName" />
 <p>{{ serverName }}</p>
 ```
+# Directives in Angular
+
+Directives are instructions in the DOM.
+
+- The `@Component` we write is also a directive that provides instructions to our component.
+- For example, `appTurnGreen` is a directive that can turn the background green.
+
+## Structural Directive
+
+Structural directives change the structure of the DOM conditionally. They are denoted by an asterisk `*`.
+
+```html
+<div class="text-danger" *ngIf="savedUsername">
+    Username saved, {{ savedUsername }}
+</div>
+```
+To use an `else` condition with `*ngIf`, you can define a template block using `ng-template`.
+```html
+<div class="text-danger" *ngIf="savedUsername; else noUsername">
+    Username saved, {{ savedUsername }}
+</div>
+<ng-template #noUsername>
+    <p>
+        Username doesn't exist!
+    </p>
+</ng-template>
+```
+## Attribute Directive
+Attribute directives modify the behavior or appearance of an element. For example, `ngStyle` and `ngClass` are attribute directives.
+```html
+<p [ngStyle]="{ backgroundColor: getStatusColor(), color: 'white' }">
+    User Status: {{ userStatus }}
+</p>
+```
+When using `ngStyle`, make sure to put quotes around property names with hyphens or use camel case.
+```html
+<p [ngClass]="{ online: userStatus === 'online' }">
+    User Status: {{ userStatus }}
+</p>
+```
+## View Encapsulation in Angular
+Angular uses view encapsulation to scope CSS styles to a component. It does this by injecting random strings into element tags and matching those strings in the CSS.
+
+```html
+<p _ngcontent-icm-c42>Hey, this is blue color</p>
+```
+## Components and Data Binding
+To send data from a parent component to a child component, you can use custom property binding.
+```html
+<app-child-component [elements]="parentElements"></app-child-component>
+```
+In the child component, define the input property using `@Input`.
+```typescript
+@Input() elements: any[];
+```
+To send data from a child component to a parent component, you can use custom event emitters.
+```typescript
+@Output() serverCreated = new EventEmitter<{ type: string, name: string, content: string }>();
+@Output() bluePrintCreated = new EventEmitter<{ type: string, name: string, content: string }>();
+```
+In the child component, emit these events with data.
+```typescript
+this.serverCreated.emit({
+  type: 'server',
+  name: this.newServerName,
+  content: this.newServerContent
+});
+```
+In the parent component, listen for the custom events and handle the data.
+
+```html
+<app-cockpit
+  (serverCreated)="addNewServer($event)"
+  (bluePrintCreated)="addNewServer($event)"
+></app-cockpit>
+```
+```typescript
+addNewServer(server: { type: string, name: string, content: string }) {
+  this.serverElements.push(server);
+}
+```
+## Important Note
+Using `@Input()` and `@Output()` for simple cases is fine. However, for complex scenarios involving multiple components and data transfer, consider other approaches for better maintainability.
