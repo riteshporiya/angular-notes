@@ -397,3 +397,235 @@ addNewServer(server: { type: string, name: string, content: string }) {
 ```
 ## Important Note
 Using `@Input()` and `@Output()` for simple cases is fine. However, for complex scenarios involving multiple components and data transfer, consider other approaches for better maintainability.
+
+# View Encapsulation in Angular
+
+In Angular, each element is given a default auto-generated attribute, and CSS uses these attributes to select the correct element.
+
+For example, an element like this:
+```html
+<p _ng_generate_id_1>Hey, this is a paragraph</p>
+```
+Is transformed in CSS like this:
+```css
+p[_ng_generate_id_1] {
+    /* Styles */
+}
+```
+
+## Changing Encapsulation
+You can change the encapsulation type in Angular components using the `encapsulation` property in the component decorator:
+```typescript
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+  encapsulation: ViewEncapsulation.Emulated // Default encapsulation type
+})
+```
+- `ViewEncapsulation.Emulated`: This is the default encapsulation type, and it generates auto-generated attributes.
+- `ViewEncapsulation.None`: Use this if you don't want the auto-generated IDs. The CSS will be applied globally across the entire application.
+- `ViewEncapsulation.ShadowDom`: Works only on supported browsers and uses the Shadow DOM for encapsulation.
+
+## Using Local References
+Local references in Angular templates are created using `#` followed by a reference name. These references can be used to access elements in the template.
+```html
+<input type="text" class="form-control" #serverName>
+<button class="btn btn-primary" (click)="onAddServer(serverName)">Add Server</button>
+```
+In the component, you can use the reference to fetch the element's value:
+
+```typescript
+onAddServer(serverName: HTMLInputElement) {
+    console.log(serverName.value); // Accessing the value of the input element
+}
+```
+
+## Getting Template Elements in the Component
+You can use `@ViewChild` to get a reference to an element defined in the template from within the component.
+```typescript
+@ViewChild("serverContent") serverContent: ElementRef;
+```
+This allows you to interact with the template element in your component code.
+
+## Sending Template to Child Component
+To send a template from a parent component to a child component, you can use the `<ng-content></ng-content>` element in the child's template. The content provided between the opening and closing tags of the child component will be passed as the template to the child.
+
+```html
+<app-server>Wakka wakka</app-server>
+```
+Inside the child component's template:
+```html
+<ng-content></ng-content>
+```
+This makes the child component ready to accept and display custom templates.
+
+# Component Lifecycle Hooks
+
+![Angular Lifecycle Hooks](lifecycle-hooks-angular.png "Angular Lifecycle Hooks")
+
+Angular provides a series of lifecycle hooks that you can use to tap into the lifecycle of a component. The most commonly used hooks are:
+
+- `ngOnChanges(changes: SimpleChanges)`: Called when any input property of the component changes.
+- `ngOnInit()`: Called when the component is initialized.
+- `ngDoCheck()`: Called whenever Angular checks for changes.
+- `ngAfterContentInit()`: Called once after the content (inside <ng-content>) is initialized.
+- `ngAfterContentChecked()`: Called after each check of the content.
+- `ngAfterViewInit()`: Called once after the view is initialized.
+- `ngAfterViewChecked()`: Called after each check of the view.
+- `ngOnDestroy()`: Called when a component is about to be destroyed.
+
+**Note**: It's important to be cautious about adding side effects in certain hooks like `ngDoCheck()` to prevent performance issues.
+
+# Angular Directives
+
+Angular provides two types of directives:
+
+1. **Attribute Directive**: These look like normal HTML attributes and change the appearance or behavior of an element. Examples include `ngClass` and `ngStyle`.
+
+2. **Structural Directive**: These look like normal HTML attributes but have an asterisk `*` before them. They add or remove elements in the DOM. Examples include `*ngFor` and `*ngIf`.
+
+Note: You cannot use both `*ngFor` and `*ngIf` on a single element.
+
+## Creating a Custom Attribute Directive
+
+To create a custom attribute directive, follow these steps:
+
+1. Create a TypeScript file for the directive in a folder.
+
+2. Define the directive using the `@Directive` decorator.
+
+```typescript
+import { Directive, ElementRef, OnInit } from "@angular/core";
+
+@Directive({
+    selector: '[basic-highlight]'
+})
+export class BasicHighlight implements OnInit {
+    constructor(private elementRef: ElementRef) { }
+    
+    ngOnInit() {
+        this.elementRef.nativeElement.style.backgroundColor = "pink";
+    }
+}
+```
+1. Angular will inject the element reference into the constructor of the directive, allowing you to manipulate the element.
+2. You can now use this directive in your template by including its selector in an element.
+
+```html
+<li basic-highlight>{{ num }}</li>
+```
+
+## Avoid Direct Element Access
+It's recommended not to access element properties directly in the component, as it may not work in server-side rendering. Instead, use the Renderer.
+
+## Using Renderer
+The Renderer helps you avoid direct element access and is the best practice.
+
+```typescript
+import { Directive, ElementRef, Renderer2, OnInit } from '@angular/core';
+
+@Directive({
+  selector: '[appBasicBetterHighlight]'
+})
+export class BasicBetterHighlightDirective implements OnInit {
+  constructor(private elementRef: ElementRef, private renderer: Renderer2) { }
+
+  ngOnInit() {
+    this.renderer.setStyle(this.elementRef.nativeElement, "background-color", "blue");
+  }
+}
+```
+
+## @HostListener and @HostBinding
+You can listen to events and bind properties directly within the directive.
+
+```typescript
+import { Directive, ElementRef, HostListener, HostBinding } from '@angular/core';
+
+@Directive({
+  selector: '[appBasicBetterHighlight]'
+})
+export class BasicBetterHighlightDirective {
+
+  @HostBinding("style.backgroundColor") backgroundColor: string = "transparent";
+
+  @HostListener("mouseenter") mouseEnter(event: Event) {
+    this.backgroundColor = "red";
+  }
+
+  @HostListener("mouseleave") mouseLeave(event: Event) {
+    this.backgroundColor = "transparent";
+  }
+}
+```
+
+## Passing Parameters to Directives
+You can pass parameters to directives using `@Input()`.
+```typescript
+import { Directive, Input } from '@angular/core';
+
+@Directive({
+  selector: '[appBasicBetterHighlight]'
+})
+export class BasicBetterHighlightDirective {
+
+  @Input() defaultBackgroundColor: string;
+  @Input() hoverBackgroundColor: string;
+
+  ngOnInit() {
+    this.backgroundColor = "yellow";
+  }
+}
+```
+Use the directive in your template and pass the parameters using property binding.
+
+```html
+<div [appBasicBetterHighlight]="'green'">
+  Hey, this is a better directive usage.
+</div>
+```
+
+## Structural Directives
+Structural directives use the asterisk `*` and conditionally change the structure of the DOM. Examples include `*ngIf` and `*ngFor`.
+### Creating a Custom Structural Directive
+Creating a custom structural directive is similar to creating an attribute directive, but you'll use `*` in the template.
+```typescript
+import { Directive, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+
+@Directive({
+  selector: '[appUnless]'
+})
+export class UnlessDirective {
+
+  @Input() set appUnless(condition: boolean) {
+    if (condition) {
+      this.vcRef.createEmbeddedView(this.templateRef);
+    } else {
+      this.vcRef.clear();
+    }
+  }
+
+  constructor(private templateRef: TemplateRef<any>, private vcRef: ViewContainerRef) { }
+}
+```
+Use the custom structural directive in your template with an asterisk `*`:
+```html
+<div *appUnless="onlyOdd">
+  <!-- Content here will be conditionally displayed -->
+</div>
+```
+
+## ngSwitch Directive
+The `ngSwitch` directive allows you to handle multiple `*ngSwitchCase` conditions efficiently.
+```html
+<div [ngSwitch]="luckyNum">
+  <div *ngSwitchCase="1">Content for case 1</div>
+  <div *ngSwitchCase="2">Content for case 2</div>
+  <!-- Add more cases as needed -->
+</div>
+```
+
+
+
+
