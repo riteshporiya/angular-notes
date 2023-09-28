@@ -625,7 +625,93 @@ The `ngSwitch` directive allows you to handle multiple `*ngSwitchCase` condition
   <!-- Add more cases as needed -->
 </div>
 ```
+# Angular Services
+In Angular, services are used to provide shared functionality, data, or utility functions across multiple components. Services are typically injected into components, and Angular takes care of creating and managing service instances.
+## Creating a Service
 
+To create a service, you can use the Angular CLI or manually create a TypeScript file. For example, to create a logging service using the CLI:
+
+```bash
+ng generate service logging
+```
+A simple class exported as a TypeScript module is also considered a service.
+
+```typescript
+export class LoggingService  {
+    logIt(accountStatus: string) {
+        console.log('A server status changed, new status: ' + accountStatus);
+    }
+}
+```
+
+## Using a Service
+To use a service in an Angular component, follow these steps:
+
+1. **Import the Service**: Import the service class in your component.
+2. **Declare the Service**: Declare the service in the providers array of the component or use Angular's modern syntax for providing services.
+3. **Inject the Service**: Inject the service into the component's constructor.
+4. **Use the Service**: Use the service's methods or properties within the component.
+
+```typescript
+import { Component } from '@angular/core';
+import { LoggingService } from '../services/logging.service';
+
+@Component(
+  providers: [LoggingService] // Declare the service here
+})
+export class NewAccountComponent {
+    constructor(private logService: LoggingService) {} // Inject the service here
+    this.logService.logIt(accountStatus) // Use the service here
+  }
+}
+```
+## Role of Services
+Services play a crucial role in Angular applications, primarily for sharing data between components and centralizing business logic. You can use services to manage and store data in a single place, making it easier to maintain and share information between components.
+
+## Hierarchical Injector
+Angular uses a hierarchical injector to manage service instances. When you declare a service in the `providers` array of a component, Angular provides the same instance of the service to all child components. However, if you declare the service in a child component's `providers` array, a new instance of the service is created.
+- App Module: Provides a single instance application-wide.
+- App Component: Provides the same instance to all components within the component hierarchy.
+- Any Component: Provides the same instance to the component and all of its child components.
+
+To share a single instance of a service across multiple components, directly use the service without mentioning it in the child component's `providers` array.
+
+## Services in Services
+You can also use services within other services. To do this, make sure to declare the services in the `providers` array of the app module to ensure they are available application-wide.
+
+## Cross-Component Communication with Services
+Services can be used for cross-component communication. Instead of using event emitters and property binding, you can use services to share data between components that are not directly connected.
+
+Here's an example of using an event emitter in a service to facilitate cross-component communication:
+
+```typescript
+import { Injectable, EventEmitter } from "@angular/core";
+
+@Injectable()
+export class AccountService {
+  statusEmitter = new EventEmitter<string>();
+}
+```
+
+You can then emit data from one component and subscribe to it in another component:
+
+```typescript
+// Component 1
+this.accountService.statusEmitter.emit(status);
+
+// Component 2
+this.accountService.statusEmitter.subscribe((status) => console.log("Received status: ", status));
+```
+
+## Services in Angular 6+
+In Angular 6+, you can provide application-wide services in a different way. Instead of adding a service class to the `provider`s array in `AppModule`, you can use the following config directly in the service:
+```typescript
+@Injectable({ providedIn: 'root' })
+export class MyService { ... }
+```
+This is equivalent to the traditional approach and offers better performance and code optimization.
+
+# Routing
 
 
 
