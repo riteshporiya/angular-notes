@@ -230,3 +230,87 @@ In your TypeScript file:
 })
 ```
 Note: Selectors cannot be ID-based and cannot include pseudo-selectors.
+
+# Understanding Data Binding in Angular
+
+## String Interpolation
+
+In Angular, you can use string interpolation to output data to the user interface (UI) using double curly braces `{{ }}`. This allows you to display variables and even call functions in your HTML templates.
+
+```typescript
+// component.ts
+export class ServerComponent {
+    serverId: number = 10;
+    serverName: string = "nginx";
+}
+
+// component.html
+<p>Name of Server with id {{ serverId }} is {{ serverName }}</p>
+```
+## Property Binding
+Property binding allows you to bind a property of an HTML element to a variable in your TypeScript code using square brackets `[ ]`.
+
+```typescript
+// component.ts
+export class ServerComponent {
+    isButtonDisabled: boolean = true;
+
+    constructor() {
+        setTimeout(() => {
+            this.isButtonDisabled = false;
+        }, 3000);
+    }
+}
+
+// component.html
+<button [disabled]="isButtonDisabled">Add Server</button>
+```
+## Event Binding
+Event binding allows you to react to events such as clicks by binding a function to an event in your HTML using parentheses `( )`.
+```typescript
+// component.ts
+export class ServerComponent {
+    onServerClick = () => {
+        this.serverStatus = "Server Created Successfully";
+    }
+}
+
+// component.html
+<button (click)="onServerClick()">Add Server</button>
+```
+## Input Event Binding
+You can also use input event binding to capture and react to input events from form elements.
+
+```typescript
+// component.ts
+export class ServerComponent {
+    serverName = "";
+
+    onServerNameChange(event: Event) {
+        this.serverName = (event.target as HTMLInputElement).value;
+    }
+}
+
+// component.html
+<input type="text" (input)="onServerNameChange($event)" />
+```
+## Two-Way Binding
+Two-way binding allows you to both display and update a variable's value in the UI. To use it, you'll need to import `FormsModule` in your module.
+```typescript
+// app.module.ts
+import { NgModule } from '@angular/core';
+import { FormsModule } from "@angular/forms";
+
+@NgModule({
+    imports: [
+        BrowserModule,
+        FormsModule // FormsModule is needed for ngModel Directive
+    ],
+})
+export class AppModule { }
+```
+```html
+<!-- component.html -->
+<input type="text" [(ngModel)]="serverName" />
+<p>{{ serverName }}</p>
+```
