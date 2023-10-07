@@ -712,6 +712,166 @@ export class MyService { ... }
 This is equivalent to the traditional approach and offers better performance and code optimization.
 
 # Routing
+Routing in Angular enables the creation of single-page applications (SPAs) where only the URL changes, and parts of the DOM are updated without refreshing the entire page.
 
+```typescript
+import { RouterModule, Routes } from '@angular/router';
 
+const routes: Routes = [
+  { path: "", component: HomeComponent },
+  { path: "users", component: UsersComponent },
+  { path: "servers", component: ServersComponent },
+];
 
+@NgModule({
+  imports: [
+    BrowserModule,
+    FormsModule,
+    RouterModule.forRoot(routes) // Registering the routes
+  ],
+  declarations: [
+    // ...
+  ],
+  providers: [
+    ServersService
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+Now, add the `<router-outlet></router-outlet>` directive in your HTML template to load the route components.
+
+```html
+<div class="row">
+  <div class="col-xs-12 col-sm-10 col-md-8 col-sm-offset-1 col-md-offset-2">
+    <router-outlet></router-outlet> <!-- Load the routes here! -->
+  </div>
+</div>
+```
+## Navigating with `routerLink`
+
+Instead of using `href` for navigation, use the `routerLink` directive to navigate between routes. It ensures that the application's state is preserved.
+```html
+<li role="presentation"><a routerLink="/">Home</a></li>
+<li role="presentation"><a routerLink="/servers">Servers</a></li>
+<li role="presentation"><a [routerLink]="['/users']">Users</a></li>
+```
+You can also use it programmatically in TypeScript files:
+
+```typescript
+import { Router } from '@angular/router';
+
+constructor(private router: Router) {}
+
+buttonClicked() {
+  this.router.navigate(['/servers']); // Navigating programmatically
+}
+```
+
+## Handling Query Parameters and Fragments
+To work with query parameters and fragments, you can use both templates and TypeScript.
+```html
+<a [routerLink]="['/servers']" [queryParams]="{ final: true }" fragment="loading">Servers</a>
+```
+
+```typescript
+serverButtonClicked() {
+  this.router.navigate(['/servers'], {
+    queryParams: { final: true },
+    fragment: 'loading'
+  });
+}
+```
+
+## Nested Routing
+To create nested routes, define child routes within a parent route using the `children` property.
+
+```typescript
+const routes: Routes = [
+  { path: "servers", component: ServersComponent, children: [
+    { path: ":id", component: ServerComponent },
+    { path: ":id/edit", component: EditServerComponent }
+  ]}
+];
+```
+
+Inside the parent component's template (e.g., ServersComponent), add another `<router-outlet></router-outlet>` to load child route components.
+
+## Route Guards
+Route guards help protect routes by performing checks before allowing access. Implement the `CanActivate` interface to create route guards.
+
+```typescript
+@Injectable()
+export class AuthGuardService implements CanActivate {
+  constructor(private auth: AuthService, private router: Router) {}
+
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean> | Promise<boolean> | boolean {
+    // Perform access check logic here
+  }
+}
+```
+
+Use the canActivate property in your route configuration to apply the guard.
+
+## CanDeactivate Guard
+The CanDeactivate guard helps prevent users from leaving a component with unsaved changes. Implement the `CanDeactivate` interface and provide a `canDeactivate` method in your component.
+
+```typescript
+@Injectable()
+export class CanDeactivateService implements CanDeactivate<CanDeactivateComponent> {
+  canDeactivate(
+    component: CanDeactivateComponent,
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot,
+    nextState: RouterStateSnapshot
+  ): Observable<boolean> | Promise<boolean> | boolean {
+    return component.canDeactivate();
+  }
+}
+```
+
+Apply the CanDeactivate guard in your route configuration to use it.
+
+## Using `data` in Routes
+You can include additional data in your routes using the `data` property.
+
+```typescript
+{ path: 'page-not-found', component: ErrorPageComponent, data: { message: "Some error occurred" } }
+```
+
+Retrieve the data in your component:
+```typescript
+this.errorMessage = this.route.snapshot.data["message"];
+```
+
+## Dynamic Data with Resolve Guard
+Resolve guards allow you to fetch data before a component is loaded. Implement the `Resolve` interface to create a resolve guard.
+```typescript
+@Injectable()
+export class ServerResolver implements Resolve<Server> {
+  constructor(private serverService: ServersService) {}
+
+  resolve(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<Server> | Promise<Server> | Server {
+    // Fetch data and return it
+  }
+}
+```
+Apply the resolve guard in your route configuration using the `resolve` property. The resolved data is available in the component.
+
+```typescript
+{ path: ":id", component: ServerComponent, resolve: { server: ServerResolver } }
+```
+
+```typescript
+ngOnInit() {
+  this.route.data.subscribe((data) => {
+    this.server = data["server"];
+  });
+}
+```
