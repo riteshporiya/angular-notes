@@ -875,3 +875,112 @@ ngOnInit() {
   });
 }
 ```
+# Observables in Angular
+
+Observables in Angular are a powerful way to handle asynchronous data streams. They are used extensively in Angular applications and offer more flexibility than promises.
+
+## Understanding Observables
+
+- A promise represents a single asynchronous value, while an observable can be thought of as a stream of values arriving synchronously or asynchronously over time—a potentially infinite stream.
+
+- Observables have three primary hooks:
+   1. **Data received**: When new data is available.
+   2. **Error received**: When an error occurs.
+   3. **Process completed**: Not always applicable, but it signals the end of the observable stream.
+
+- Observables are not native JavaScript or TypeScript constructs; they are provided by the third-party package "rxjs," which comes bundled with Angular.
+
+## Basic Usage of Observables
+
+```typescript
+import { interval, Subscription } from 'rxjs';
+
+export class HomeComponent implements OnInit, OnDestroy {
+  private intervalSubscription: Subscription;
+
+  ngOnInit() {
+    this.intervalSubscription = interval(1000).subscribe((count) => {
+      console.log("Count: ", count);
+    });
+  }
+
+  ngOnDestroy() {
+    this.intervalSubscription.unsubscribe();
+  }
+}
+```
+
+**Note**: Observables can lead to memory leaks if not properly managed. It's essential to unsubscribe from them when they are no longer needed to avoid leaks.
+
+## Creating Custom Observables
+You can create custom observables using the `Observable.create` method. Here's an example:
+
+```typescript
+const customObservable = Observable.create((observer) => {
+  let count = 0;
+  setInterval(() => {
+    count++;
+    observer.next(count); // Send data
+  }, 1000);
+});
+```
+You can also handle errors and completion in custom observables:
+
+```typescript
+const customObservable = Observable.create((observer) => {
+  let count = 0;
+  setInterval(() => {
+    count++;
+    if (count === 2) {
+      observer.complete(); // Observer is complete
+    }
+    if (count === 3) {
+      observer.error('Oops, count is 3!'); // Observer gives an error
+    }
+    observer.next(count);
+  }, 1000);
+});
+```
+## Transforming Data with Operators
+You can transform the data emitted by an observable using operators. For example, you can use the `map` operator to modify emitted values:
+```typescript
+const changeObservable = customObservable.pipe(map((data: number) => {
+  return 'Point: ' + data;
+}));
+```
+
+Operators like `map`, `filter`, and others can be used to modify observable data before subscribing to it.
+## Subjects
+
+Subjects are a way to both produce and consume values in the observable world. They are similar to Event Emitters but offer more flexibility and optimization.
+
+### Using Subjects
+Define a Subject in a service file:
+```typescript
+import { Injectable } from "@angular/core";
+import { Subject } from "rxjs";
+
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  authEmitter = new Subject<boolean>();
+}
+```
+
+In a component, use `.next()` to send data:
+```typescript
+this.userService.authEmitter.next(showText);
+```
+In another component, subscribe to the subject to receive changes:
+
+```typescript
+this.userService.authEmitter.subscribe((value) => {
+  // Handle the received value
+});
+```
+
+Subjects are particularly useful for cross-component communication and provide an alternative to using `@Output` with Event Emitters.
+
+# Forms in Angular
+
+
+
